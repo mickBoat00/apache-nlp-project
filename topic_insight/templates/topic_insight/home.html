@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div>
+    <div class="input-section">
+        <form action="." method="post" class="input-form">
+            {% csrf_token %}
+            <label for="product_url">Amazon product url</label>
+            <input type="url" id="product_url" name="product_url" placeholder="Enter the url of an amazon product ">
+            <button type="submit">Generate review insights</button>
+        </form>
+    </div>
+
+    <div class="content-section">
+
+        {% if error_message %}
+        <div class="product-info">
+            <p style="color: red;">{{ error_message }}</p>
+        </div>
+        {% endif %}
+
+        {% if product_page_link %}
+        <div class="product-info">
+            <a href={{ product_page_link }} target="_blank">Go to product page</a>
+            {% if customer_reviews_page_link %}
+                <a href={{ customer_reviews_page_link }} target="_blank">Go to product's customer reviews page</a>
+            {% endif %}     
+        </div>
+        {% endif %}
+
+        {% if results %}
+        <div class="card-section">
+            {% for cluster in results.clusters %}
+            <div class="card">
+                <h2>{{ cluster.cluster_name }}</h2>
+                <p>Customer reviews under this cluster "{{ cluster.cluster_name }}"</p>
+                <ul>
+                    {% for review in cluster.cluster_reviews %}
+                    <li>{{ review.title }} </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+
+        </div>
+        {% endif %}
+    </div>
+{% endblock content %}
