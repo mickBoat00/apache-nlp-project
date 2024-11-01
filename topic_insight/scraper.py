@@ -1,8 +1,38 @@
+import os
 import requests
 from bs4 import BeautifulSoup
 from .constants import header
 from urllib.parse import urlparse
 
+class OxylabScraperAPI:
+    def __init__(self, product_asin):
+        self.payload = {
+            'source': 'amazon_reviews',
+            'query': product_asin,
+            'pages': 2, 
+            'parse': True
+        }
+        self.username = os.environ['OXYLAB_USERNAME']
+        self.password = os.environ['OXYLAB_PASSWORD']
+
+    def get_product_reviews(self):
+        response = requests.request(
+            'POST',
+            'https://realtime.oxylabs.io/v1/queries',
+            auth=(self.username, self.password),
+            json=self.payload,
+        )
+        return response.json()
+    
+    def list_reviews(self):
+        reviews = []
+        data = self.get_product_reviews()
+        results = data['results']
+        for result in results:
+            reviews.extend(result['content']['reviews'])
+
+        return reviews
+    
 
 class AmazonScraper:
     """
@@ -20,7 +50,7 @@ class AmazonScraper:
 
     def get_customer_reviews_link(self):
         soup = self.scrape_page_content(self.url)
-        review_link = [a['href'] for a in soup.find_all('a') if a.text.strip() == 'See more reviews' and a.get('href')][0]
+        review_link = [a.get('href') for a in soup.find_all('a') if a.text.strip() == 'See more reviews' and a.get('href')][0]
         customer_reviews_path = f'https://{urlparse(self.url).netloc}/{review_link}'
 
         return customer_reviews_path

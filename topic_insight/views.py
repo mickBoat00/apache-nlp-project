@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from .scraper import AmazonScraper
 from .ml_model import OpenAIModel
-from .utils import valid_amazon_url
+from .utils import valid_amazon_url, get_product_asin_from_url
+from .scraper import OxylabScraperAPI
+import json
 
 # Create your views here.
 def home(request): 
@@ -15,12 +17,10 @@ def home(request):
 
         if valid_amazon_url(product_url):
             amazon_product_url = product_url
-            amazon_scraper = AmazonScraper(amazon_product_url)
-            customer_reviews_url = amazon_scraper.get_customer_reviews_link()
-            customer_reviews = amazon_scraper.generate_customer_reviews(customer_reviews_url)
-            if customer_reviews:
-                results = OpenAIModel().categorize_reviews(customer_reviews)
-
+            asin = get_product_asin_from_url(product_url)
+            scraper = OxylabScraperAPI(asin)
+            reviews = scraper.list_reviews()
+            results = OpenAIModel(reviews).categorize_reviews()
         else:
             error_message = "Enter a valid amazon url."
 
